@@ -8,7 +8,9 @@
 
 #import "ReviewPromptManger.h"
 
-NSString * const kAPPID = @"id890837037";
+NSString * const kAPPID = @"<APP ID HERE>";
+
+NSString *const RPMAppName = @"<APP NAME HERE>";
 
 NSString *const RPMAlertString_Yes = @"Yes";
 NSString *const RPMAlertString_NO = @"No";
@@ -16,7 +18,7 @@ NSString *const RPMAlertString_AskMeLater = @"Ask me later";
 
 static NSString * const kReviewPromptCount = @"kReviewPromptCount";
 static int const kNoFurtherPromptsVal = 666;
-static int const kReviewPromptDisplayThreashold = 3;
+static int const kReviewPromptDisplayThreashold = 2;
 
 @implementation ReviewPromptManger
 
@@ -33,24 +35,30 @@ static int const kReviewPromptDisplayThreashold = 3;
         if (promptCount == kReviewPromptDisplayThreashold) {
             
             [self displayRatePrompt];
-            [self resetPromptCount];
             
         }else if (promptCount != kNoFurtherPromptsVal && promptCount < kReviewPromptDisplayThreashold) {
-
-            promptCount++;
-            [self storePromptCountInteger:promptCount];
+            
+            [self incrementPromtCountStore:promptCount];
         }
         
     }else{
-        [self resetPromptCount];
+        [self storePromptCountInteger:0];
     }
     
 }
 
 +(void)storePromptCountInteger:(NSInteger)promptCount {
+    
+    NSLog(@"Storing promptCounter: %ld", (long)promptCount);
+    
     NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
     [ud setObject:@(promptCount) forKey:kReviewPromptCount];
     [ud synchronize];
+}
+
++(void)incrementPromtCountStore:(NSInteger)promptCount {
+    promptCount++;
+    [self storePromptCountInteger:promptCount];
 }
 
 +(void)noMoreReviewPrompts {
@@ -63,7 +71,7 @@ static int const kReviewPromptDisplayThreashold = 3;
 
 +(void)displayRatePrompt {
     
-    UIAlertView *ratePromt = [[UIAlertView alloc] initWithTitle:@"Like Vintage London?"
+    UIAlertView *ratePromt = [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"Like %@?", RPMAppName]
                                                         message:@"Rate us on the App store"
                                                        delegate:self
                                               cancelButtonTitle:RPMAlertString_AskMeLater
@@ -77,6 +85,7 @@ static int const kReviewPromptDisplayThreashold = 3;
     NSString *btnTitle = [alertView buttonTitleAtIndex:buttonIndex];
     if ([btnTitle isEqualToString:RPMAlertString_Yes]) {
         [self openAppStoreReviews];
+        [ReviewPromptManger noMoreReviewPrompts];
     }else if ([btnTitle isEqualToString:RPMAlertString_NO]){
         [ReviewPromptManger noMoreReviewPrompts];
     }else{
